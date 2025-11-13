@@ -1,0 +1,445 @@
+<html>
+  <head>
+    <title>ESP32-CAM Robot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: Arial;
+        text-align: center;
+        margin: 0px auto;
+        padding-top: 30px;
+        background-color: red;
+      }
+      table {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      td {
+        padding: 8 px;
+      }
+      .button {
+        background-color: black;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 18px;
+        margin: 6px 3px;
+        cursor: pointer;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      }
+      img {
+        width: auto;
+        max-width: 100%;
+        height: auto;
+      }
+      .main {
+        justify-content: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+      }
+      .video {
+        display: inline;
+        background-color: aliceblue;
+        align-self: center;
+        width: auto;
+        height: auto;
+      }
+      .mode-text {
+        font-weight: bold;
+        font-size: 16px;
+        color: #6c757d; /* Default Grey */
+        text-align: center;
+        margin-top: 10px;
+      }
+      .control-bar {
+        background-color: black;
+        height: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .control-bar-field {
+        height: auto;
+        width: auto;
+        display: block;
+        flex: 1;
+      }
+      .control-panel {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        background-color: beige;
+        justify-content: center;
+      }
+      .bodycontrol {
+        background-color: beige;
+        display: inline-flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .mastercontrol {
+        display: inline-flex;
+        flex-wrap: wrap;
+        background-color: beige;
+      }
+      .heightcontrol {
+        display: inline-flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main">
+      <div class="video">
+        <h1>LEGION MARK-2</h1>
+        <img src="" id="photo" />
+      </div>
+
+      <div class="control-bar">
+        <div class="control-bar-field">
+          <button
+            class="button"
+            id="driveModeButton"
+            onclick="setMode('drive')"
+          >
+            DRIVE MODE
+          </button>
+        </div>
+        <div class="control-bar-field">
+          <button class="button" id="walkModeButton" onclick="setMode('walk')">
+            WALK MODE
+          </button>
+        </div>
+        <div class="control-bar-field">
+          <div class="mode-text">
+            Current mode is <span id="currentMode">walk</span>
+          </div>
+        </div>
+      </div>
+      <div class="control-panel">
+        <div class="bodycontrol">
+          <label for="zdd" class="slider-label">z-axis:</label>
+          <input
+            type="range"
+            id="zdd"
+            class="slider"
+            data-axis="zd"
+            min="-100"
+            max="0"
+            value="-50"
+            oninput="updateSliderValue(this)"
+          />
+          <span id="zd" class="slider-value">-50</span>
+          <br />
+
+          <label for="ydd" class="slider-label">y-axis:</label>
+          <input
+            type="range"
+            id="ydd"
+            class="slider"
+            data-axis="yd"
+            min="10"
+            max="100"
+            value="62"
+            oninput="updateSliderValue(this)"
+          />
+          <span id="yd" class="slider-value">62</span>
+          <br />
+
+          <label for="xdd" class="slider-label">x-axis:</label>
+          <input
+            type="range"
+            id="xdd"
+            class="slider"
+            data-axis="xd"
+            min="10"
+            max="100"
+            value="62"
+            oninput="updateSliderValue(this)"
+          />
+          <span id="xd" class="slider-value">62</span>
+          <br />
+
+          <label for="lss" class="slider-label">Leg Speed:</label>
+          <input
+            type="range"
+            id="lss"
+            class="slider"
+            data-axis="ls"
+            min="4"
+            max="12"
+            value="8"
+            oninput="updateSliderValue(this)"
+          />
+          <span id="ls" class="slider-value">8</span>
+          <br />
+          <label for="sss" class="slider-label">Movement Speed:</label>
+          <input
+            type="range"
+            id="sss"
+            class="slider"
+            data-axis="ss"
+            min="30"
+            max="100"
+            value="60"
+            oninput="updateSliderValue(this)"
+          />
+          <span id="ss" class="slider-value">60</span>
+          <br />
+
+          <button class="button" onclick="resetAllValues()">Reset</button>
+        </div>
+
+        <div class="motion-control">
+          <table>
+            <tr>
+              <td colspan="3" align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','f');"
+                  ontouchstart="toggleCheckbox('move','f');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  Forward
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','l');"
+                  ontouchstart="toggleCheckbox('move','l');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  Left
+                </button>
+              </td>
+              <td align="center">
+                <button
+                  class="button"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  Stop
+                </button>
+              </td>
+              <td align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','r');"
+                  ontouchstart="toggleCheckbox('move','r');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  Right
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','b');"
+                  ontouchstart="toggleCheckbox('move','b');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  Backward
+                </button>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="drive-motion-control">
+          <table>
+            <tr>
+              <td colspan="3" align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','w');"
+                  ontouchstart="toggleCheckbox('move','w');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  M-Forward
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','a');"
+                  ontouchstart="toggleCheckbox('move','a');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  M-Left
+                </button>
+              </td>
+              <td align="center">
+                <button
+                  class="button"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  Stop
+                </button>
+              </td>
+              <td align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','d');"
+                  ontouchstart="toggleCheckbox('move','d');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  M-Right
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="3" align="center">
+                <button
+                  class="button"
+                  onmousedown="toggleCheckbox('move','x');"
+                  ontouchstart="toggleCheckbox('move','x');"
+                  onmouseup="toggleCheckbox('move','s');"
+                  ontouchend="toggleCheckbox('move','s');"
+                >
+                  M-Backward
+                </button>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="mastercontrol">
+          <div class="heightcontrol">
+            <h6>Height Control</h6>
+            <div class="heightcontrol1">
+              <button class="button" onclick="adjustheight('u');">
+                UP 
+              </button>
+            </div>
+            <div class="heightcontrol2">
+              <span id="heightspan" class="slider-value">50</span>
+              <br />
+            </div>
+            <div class="heightcontrol3">
+              <button class="button" onclick="adjustheight('v');">
+                Down
+              </button>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    <script>
+      function toggleCheckbox(action, value) {
+        var xhr = new XMLHttpRequest();
+        // Construct the URL with action and value
+        xhr.open("GET", `/action?go=${action}&value=${value}`, true);
+        xhr.send();
+      }
+
+      window.onload = document.getElementById("photo").src =
+        window.location.href.slice(0, -1) + ":81/stream";
+
+      let currentMode = null;
+
+
+      function adjustheight(val) {
+        toggleCheckbox("height", val);
+        // Get the heightspan element
+        const heightSpan = document.getElementById("heightspan");
+      
+        // Parse the current value as an integer
+        let currentValue = parseInt(heightSpan.textContent, 10);
+      
+        // Adjust the value based on the input
+        if (val === 'u') {
+          currentValue += 5; // Increase value by 5
+        } else if (val === 'v') {
+          currentValue -= 5; // Decrease value by 5
+    
+        }
+        // Update the textContent of the heightSpan
+        heightSpan.textContent = currentValue;
+      }
+      
+
+      function updateSliderValue(axis, value) {
+        document.getElementById(axis).textContent = value;
+        toggleCheckbox(axis, value);
+      }
+
+      function updateSliderValue(slider) {
+        const axis = slider.getAttribute("data-axis");
+        const value = slider.value;
+
+        // Update the span text
+        document.getElementById(axis).textContent = value;
+
+        // Send value to toggleCheckbox
+        toggleCheckbox(axis, value);
+      }
+
+      function resetAllValues() {
+        // Define default values for sliders
+        const defaults = {
+          xd: 62,
+          yd: 62,
+          zd: -50,
+          ls: 8,
+          ss: 60,
+        };
+
+        // Loop through defaults and reset sliders and spans
+        Object.keys(defaults).forEach((axis) => {
+          const slider = document.querySelector(`input[data-axis="${axis}"]`);
+          const defaultValue = defaults[axis];
+
+          // Update slider and span values
+          slider.value = defaultValue;
+          document.getElementById(axis).textContent = defaultValue;
+
+          // Send reset value to toggleCheckbox
+          toggleCheckbox(axis, defaultValue);
+        });
+      }
+
+      function setMode(mode) {
+        toggleCheckbox("mode", mode);
+        // Set the new mode
+        currentMode = mode;
+        document.getElementById("currentMode").textContent = mode;
+
+        // Update button styles based on the active mode
+        document
+          .getElementById("driveModeButton")
+          .classList.toggle("active", currentMode === "Drive");
+        document
+          .getElementById("walkModeButton")
+          .classList.toggle("active", currentMode === "Walk");
+      }
+    </script>
+  </body>
+</html>
